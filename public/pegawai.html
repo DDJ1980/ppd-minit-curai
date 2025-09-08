@@ -1,0 +1,64 @@
+<!doctype html><html lang="ms"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pegawai • Isi Minit</title>
+<link rel="stylesheet" href="./theme.css">
+<script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head><body>
+<div class="kit">
+  <header class="header">
+    <div class="brand">
+      <img src="/.netlify/functions/assets/logo.png" onerror="this.src='netlify/functions/assets/logo.png'">
+      <div>
+        <h1>PPD Mersing <small>Platform Minit Curai • Sektor Pembelajaran</small></h1>
+      </div>
+    </div>
+    <div class="appbar">
+      <span id="whoami" class="badge" style="display:none"></span>
+      <button id="btnLogin" class="btn btn-outline">Log Masuk</button>
+      <button id="btnLogout" class="btn btn-outline" style="display:none">Log Keluar</button>
+    </div>
+  </header>
+  <main style="margin-top:18px">
+
+<section class="card card-pad">
+  <form id="f" class="form">
+    <div class="row-2">
+      <input class="input" name="tarikh" type="date" required>
+      <input class="input" name="masa" placeholder="Masa" required>
+    </div>
+    <div class="row-2">
+      <input class="input" name="tempat" placeholder="Tempat" required>
+      <input class="input" name="tajuk" placeholder="Tajuk" required>
+    </div>
+    <textarea class="textarea" name="catatan" rows="3" placeholder="Catatan" required></textarea>
+    <textarea class="textarea" name="tindakan_ppd" rows="2" placeholder="Tindakan PPD" required></textarea>
+    <textarea class="textarea" name="rumusan" rows="2" placeholder="Rumusan" required></textarea>
+    <div class="toolbar">
+      <button class="btn btn-primary" type="submit">Hantar kepada Timbalan</button>
+      <a id="wa" class="btn btn-gold" target="_blank" style="display:none">Hantar WhatsApp</a>
+    </div>
+  </form>
+  <p id="ok" class="note" style="display:none">✅ Minit dihantar.</p>
+</section>
+<script>
+document.getElementById('f').addEventListener('submit', async(e)=>{
+  e.preventDefault();
+  const fd=new FormData(e.target); const p=Object.fromEntries(fd.entries());
+  const r=await ap('/.netlify/functions/submit-minit',{method:'POST',body:JSON.stringify(p)});
+  if(r.ok){ document.getElementById('ok').style.display='block'; const a=document.getElementById('wa'); if(r.wa){ a.href=r.wa; a.style.display='inline-flex'; } e.target.reset(); } else alert(r.error||'Gagal');
+});
+</script>
+
+  </main>
+  <p class="footer">Warna rasmi biru & kuning • Mesra klik</p>
+</div>
+<script>
+function cu(){return netlifyIdentity&&netlifyIdentity.currentUser()}
+async function tok(){const u=cu();return u?await u.token():null}
+async function ap(path,opts={}){const t=await tok();opts.headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});if(t)opts.headers.Authorization='Bearer '+t;const r=await fetch(path,opts);return r.json()}
+const who=document.getElementById('whoami');const bIn=document.getElementById('btnLogin');const bOut=document.getElementById('btnLogout');
+function upd(){const u=cu();if(u){who.style.display='inline-flex';who.textContent=u.email;bIn.style.display='none';bOut.style.display='inline-flex';} else {who.style.display='none';bIn.style.display='inline-flex';bOut.style.display='none';}}
+bIn.addEventListener('click',()=>netlifyIdentity.open('login')); bOut.addEventListener('click',()=>netlifyIdentity.logout());
+netlifyIdentity.on('init',upd); netlifyIdentity.on('login',()=>{upd(); location.reload()}); netlifyIdentity.on('logout',()=>{upd(); location.reload()}); netlifyIdentity.init();
+</script>
+</body></html>

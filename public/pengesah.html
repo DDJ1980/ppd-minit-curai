@@ -1,0 +1,89 @@
+<!doctype html><html lang="ms"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pengesah • Sahkan & E-mel</title>
+<link rel="stylesheet" href="./theme.css">
+<script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head><body>
+<div class="kit">
+  <header class="header">
+    <div class="brand">
+      <img src="/.netlify/functions/assets/logo.png" onerror="this.src='netlify/functions/assets/logo.png'">
+      <div>
+        <h1>PPD Mersing <small>Platform Minit Curai • Sektor Pembelajaran</small></h1>
+      </div>
+    </div>
+    <div class="appbar">
+      <span id="whoami" class="badge" style="display:none"></span>
+      <button id="btnLogin" class="btn btn-outline">Log Masuk</button>
+      <button id="btnLogout" class="btn btn-outline" style="display:none">Log Keluar</button>
+    </div>
+  </header>
+  <main style="margin-top:18px">
+
+<section class="card card-pad">
+  <div class="toolbar" style="margin-bottom:8px">
+    <input id="qFrom" class="input" type="date" style="max-width:200px">
+    <input id="qTo" class="input" type="date" style="max-width:200px">
+    <input id="qEmail" class="input" placeholder="Emel Pegawai" style="max-width:260px">
+    <select id="qStatus" class="select" style="max-width:200px">
+      <option value="">Status: Semua</option>
+      <option value="PENDING">PENDING</option>
+      <option value="APPROVED">APPROVED</option>
+    </select>
+    <button id="btnFilter" class="btn btn-outline">Tapis</button>
+    <button id="btnReset" class="btn btn-outline">Reset</button>
+  </div>
+  <div id="list"></div>
+</section>
+<script>
+async function loadList(){
+  const qs={ from: qFrom.value, to: qTo.value, email: qEmail.value, status: qStatus.value };
+  const r=await ap('/.netlify/functions/list-minit',{method:'POST',body:JSON.stringify(qs)});
+  const box=document.getElementById('list'); box.innerHTML='';
+  if(r.ok){
+    (r.items||[]).forEach(it=>{
+      const div=document.createElement('div'); div.className='card card-pad'; div.style.margin='10px 0';
+      div.innerHTML=`
+        <div style="display:grid;grid-template-columns:2fr 3fr 1fr;gap:12px">
+          <div>
+            <div class="title">${it.tajuk}</div>
+            <div class="note">${it.tarikh} • ${it.masa} • ${it.tempat}</div>
+            <div class="note">Pegawai: ${it.pegawai_nama} (${it.pegawai_email})</div>
+            <div class="badge">${it.status}</div>
+          </div>
+          <div>
+            <div><b>Catatan:</b> ${it.catatan}</div>
+            <div><b>Tindakan PPD:</b> ${it.tindakan_ppd}</div>
+            <div><b>Rumusan:</b> ${it.rumusan}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button data-id="${it.id}" class="btn btn-primary ${it.status==='APPROVED'?'hide':''}">Sahkan & E-mel PDF</button>
+            ${it.pdfUrl? `<a class="btn btn-outline" target="_blank" href="${it.pdfUrl}">Lihat PDF</a>`: ''}
+          </div>
+        </div>`;
+      box.appendChild(div);
+    });
+    box.querySelectorAll('button[data-id]').forEach(b=>b.addEventListener('click', async()=>{
+      const id=b.getAttribute('data-id'); const res=await ap('/.netlify/functions/approve-minit',{method:'POST',body:JSON.stringify({id})});
+      if(res.ok){ alert('Disahkan. E-mel dihantar (jika SMTP betul).'); loadList(); if(res.pdfUrl) window.open(res.pdfUrl,'_blank'); } else alert(res.error||'Gagal.');
+    }));
+  } else { box.textContent=r.error||'Ralat.'; }
+}
+document.getElementById('btnFilter').addEventListener('click', loadList);
+document.getElementById('btnReset').addEventListener('click', ()=>{ qFrom.value=qTo.value=qEmail.value=''; qStatus.value=''; loadList(); });
+loadList();
+</script>
+
+  </main>
+  <p class="footer">Warna rasmi biru & kuning • Mesra klik</p>
+</div>
+<script>
+function cu(){return netlifyIdentity&&netlifyIdentity.currentUser()}
+async function tok(){const u=cu();return u?await u.token():null}
+async function ap(path,opts={}){const t=await tok();opts.headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});if(t)opts.headers.Authorization='Bearer '+t;const r=await fetch(path,opts);return r.json()}
+const who=document.getElementById('whoami');const bIn=document.getElementById('btnLogin');const bOut=document.getElementById('btnLogout');
+function upd(){const u=cu();if(u){who.style.display='inline-flex';who.textContent=u.email;bIn.style.display='none';bOut.style.display='inline-flex';} else {who.style.display='none';bIn.style.display='inline-flex';bOut.style.display='none';}}
+bIn.addEventListener('click',()=>netlifyIdentity.open('login')); bOut.addEventListener('click',()=>netlifyIdentity.logout());
+netlifyIdentity.on('init',upd); netlifyIdentity.on('login',()=>{upd(); location.reload()}); netlifyIdentity.on('logout',()=>{upd(); location.reload()}); netlifyIdentity.init();
+</script>
+</body></html>
