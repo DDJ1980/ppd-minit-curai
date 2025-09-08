@@ -5,12 +5,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head><body>
+<div class="banner"></div>
 <div class="wrap">
   <header class="header">
     <div class="brand">
-      <img src="/.netlify/functions/assets/logo.png" onerror="this.src='netlify/functions/assets/logo.png'">
+      <img src="/logo.png" onerror="this.src='/.netlify/functions/assets/logo.png'">
       <div>
-        <h1>PPD Mersing <small>Platform Minit Curai • Sektor Pembelajaran</small></h1>
+        <h1>PEJABAT PENDIDIKAN DAERAH MERSING</h1>
+        <small>APLIKASI PEREKODAN MINIT CURAI • SEKTOR PEMBELAJARAN</small>
       </div>
     </div>
     <div class="spacer"></div>
@@ -20,7 +22,7 @@
   </header>
   <main class="kid">
 
-<section class="card card-pad">
+<section class="card card-pad fade-in">
   <div class="note">Isi semua medan wajib. Emel pegawai diambil automatik dari akaun yang log masuk.</div>
   <form id="f" class="form kid">
     <div class="row-2">
@@ -52,15 +54,29 @@ document.getElementById('f').addEventListener('submit', async(e)=>{
 </script>
 
   </main>
-  <p class="footer">© PPD Mersing • Tema rasmi biru–kuning</p>
 </div>
 <script>
 function cu(){return netlifyIdentity&&netlifyIdentity.currentUser()}
 async function tok(){const u=cu();return u?await u.token():null}
 async function ap(path,opts={}){const t=await tok();opts.headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});if(t)opts.headers.Authorization='Bearer '+t;const r=await fetch(path,opts);return r.json()}
 const who=document.getElementById('whoami');const bIn=document.getElementById('btnLogin');const bOut=document.getElementById('btnLogout');
-function upd(){const u=cu(); if(u){who.classList.remove('hide'); who.textContent=u.email; bIn.classList.add('hide'); bOut.classList.remove('hide');} else {who.classList.add('hide'); bIn.classList.remove('hide'); bOut.classList.add('hide');}}
+function upd(){
+  const u=cu();
+  if(u){
+    who.classList.remove('hide'); who.textContent=u.email; bIn.classList.add('hide'); bOut.classList.remove('hide');
+    if(!document.getElementById('quicknav')){
+      const q=document.createElement('div'); q.id='quicknav'; q.style.marginRight='8px';
+      q.innerHTML=`<a href="/admin.html" class="btn btn-outline" style="margin-right:6px">Admin</a>
+                   <a href="/pegawai.html" class="btn btn-outline" style="margin-right:6px">Pegawai</a>
+                   <a href="/pengesah.html" class="btn btn-outline">Pengesah</a>`;
+      bIn.parentNode.insertBefore(q, bIn);
+    }
+  } else {
+    who.classList.add('hide'); bIn.classList.remove('hide'); bOut.classList.add('hide');
+    const q=document.getElementById('quicknav'); if(q) q.remove();
+  }
+}
 bIn.addEventListener('click',()=>netlifyIdentity.open('login')); bOut.addEventListener('click',()=>netlifyIdentity.logout());
-netlifyIdentity.on('init',upd); netlifyIdentity.on('login',()=>{upd(); location.reload()}); netlifyIdentity.on('logout',()=>{upd(); location.reload()}); netlifyIdentity.init();
+netlifyIdentity.on('init',upd); netlifyIdentity.on('login',()=>{upd();}); netlifyIdentity.on('logout',()=>{upd();}); netlifyIdentity.init();
 </script>
 </body></html>
