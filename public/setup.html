@@ -1,6 +1,6 @@
 <!doctype html><html lang="ms"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pegawai • Hantar Minit Curai</title>
+<title>Setup Admin</title>
 <link rel="stylesheet" href="./theme.css">
 </head><body>
 <div class="banner"></div>
@@ -21,32 +21,21 @@
   <main class="kid">
 
 <section class="card card-pad">
-  <div class="note">Emel pegawai diambil daripada akaun log masuk.</div>
+  <h3>Setup Admin (sekali sahaja)</h3>
+  <p class="note">Masukkan <b>ADMIN_SETUP_KEY</b> dan cipta admin pertama.</p>
   <form id="f" class="form kid">
-    <div class="row-2">
-      <input class="input" name="tarikh" type="date" required>
-      <input class="input" name="masa" placeholder="Masa" required>
-    </div>
-    <div class="row-2">
-      <input class="input" name="tempat" placeholder="Tempat" required>
-      <input class="input" name="tajuk" placeholder="Tajuk" required>
-    </div>
-    <textarea class="textarea" name="catatan" rows="4" placeholder="Catatan" required></textarea>
-    <textarea class="textarea" name="tindakan_ppd" rows="3" placeholder="Tindakan PPD" required></textarea>
-    <textarea class="textarea" name="rumusan" rows="3" placeholder="Rumusan" required></textarea>
-    <div class="center">
-      <button class="btn btn-primary" type="submit">Hantar kepada Timbalan</button>
-      <a id="wa" class="btn btn-gold hide" target="_blank">WhatsApp Timbalan</a>
-    </div>
+    <input class="input" name="setupKey" placeholder="ADMIN_SETUP_KEY" required>
+    <input class="input" name="name" placeholder="Nama" required>
+    <input class="input" name="email" type="email" placeholder="Emel admin" required>
+    <input class="input" name="password" type="password" placeholder="Kata laluan admin" required>
+    <button class="btn btn-gold" type="submit">Cipta Admin</button>
   </form>
-  <p id="ok" class="note hide">✅ Minit dihantar.</p>
 </section>
 <script>
-const me=user(); if(!me){ alert('Sila log masuk dahulu.'); location.href='/login.html'; }
 document.getElementById('f').addEventListener('submit', async(e)=>{
-  e.preventDefault(); const p=Object.fromEntries(new FormData(e.target).entries()); 
-  const r=await ap('/.netlify/functions/submit-minit',{method:'POST',body:JSON.stringify(p)});
-  if(r.ok){ document.getElementById('ok').classList.remove('hide'); const a=document.getElementById('wa'); if(r.wa){ a.href=r.wa; a.classList.remove('hide'); } e.target.reset(); } else alert(r.error||'Gagal');
+  e.preventDefault(); const fd=new FormData(e.target); const p=Object.fromEntries(fd.entries());
+  const r=await ap('/.netlify/functions/auth-setup',{method:'POST',body:JSON.stringify(p)});
+  if(r.ok){ alert('Admin dicipta. Sila log masuk.'); location.href='/login.html'; } else alert(r.error||'Gagal setup');
 });
 </script>
 

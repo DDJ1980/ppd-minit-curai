@@ -2,8 +2,6 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pengesah • Sahkan & E‑mel PDF</title>
 <link rel="stylesheet" href="./theme.css">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head><body>
 <div class="banner"></div>
 <div class="wrap">
@@ -37,9 +35,8 @@
   </div>
 </section>
 
-<section id="list" class="kid fade-in"></section>
+<section id="list" class="kid"></section>
 
-<!-- Modal for preview -->
 <div id="pvMask" class="modal-mask">
   <div class="modal">
     <header>
@@ -51,7 +48,7 @@
 </div>
 
 <script>
-if(!cu()){ alert('Sila log masuk dahulu.'); location.href='/' }
+const me=user(); if(!me || me.role!=='pengesah'){ alert('Untuk Timbalan/Pengesah'); location.href='/'; }
 function pvOpen(html){ pvBody.innerHTML = html; pvMask.style.display='flex'; }
 function pvClose(){ pvMask.style.display='none'; }
 function renderPreview(it){
@@ -62,20 +59,17 @@ function renderPreview(it){
         <div style="font-weight:800">PEJABAT PENDIDIKAN DAERAH MERSING</div>
         <div>APLIKASI PEREKODAN MINIT CURAI • SEKTOR PEMBELAJARAN</div>
       </div>
-      <div class="hr"></div>
       <div class="row"><div><b>Tarikh</b></div><div>${it.tarikh||'-'}</div></div>
       <div class="row"><div><b>Masa</b></div><div>${it.masa||'-'}</div></div>
       <div class="row"><div><b>Tempat</b></div><div>${it.tempat||'-'}</div></div>
       <div class="row"><div><b>Tajuk</b></div><div>${it.tajuk||'-'}</div></div>
       <div class="row"><div><b>Pegawai</b></div><div>${it.pegawai_nama||''} &lt;${it.pegawai_email||''}&gt;</div></div>
-      <div class="hr"></div>
+      <div style="height:6px"></div>
       <div><b>Catatan</b><div>${(it.catatan||'').replaceAll('\n','<br/>')}</div></div>
-      <div style="height:8px"></div>
+      <div style="height:6px"></div>
       <div><b>Tindakan PPD</b><div>${(it.tindakan_ppd||'').replaceAll('\n','<br/>')}</div></div>
-      <div style="height:8px"></div>
+      <div style="height:6px"></div>
       <div><b>Rumusan</b><div>${(it.rumusan||'').replaceAll('\n','<br/>')}</div></div>
-      <div style="height:16px"></div>
-      <div style="width:240px;border-top:1px solid #cbd5e1;padding-top:6px;text-align:center">Timbalan Sektor Pembelajaran</div>
     </div>`;
 }
 async function loadList(){
@@ -100,14 +94,13 @@ async function loadList(){
           <div class="grid">
             ${it.status!=='APPROVED' ? `<a data-id="${'${it.id}'}" class="btn btn-primary">Sahkan & E‑mel PDF</a>` : ''}
             <a class="btn btn-gold" onclick='pvOpen(renderPreview(${ 'it' }))'>Preview</a>
-            ${it.pdfUrl? `<a class="btn btn-outline" target="_blank" href="${'${it.pdfUrl}'}">Lihat PDF</a>`: ''}
           </div>
         </div>`;
       box.appendChild(div);
     });
     box.querySelectorAll('a[data-id]').forEach(b=>b.addEventListener('click', async()=>{
       const id=b.getAttribute('data-id'); const res=await ap('/.netlify/functions/approve-minit',{method:'POST',body:JSON.stringify({id})});
-      if(res.ok){ alert('Disahkan. E‑mel dihantar (jika SMTP betul).'); loadList(); if(res.pdfUrl) window.open(res.pdfUrl,'_blank'); } else alert(res.error||'Gagal.');
+      if(res.ok){ alert('Disahkan.'); loadList(); } else alert(res.error||'Gagal.');
     }));
   } else { box.textContent=r.error||'Ralat.'; }
 }
@@ -119,27 +112,21 @@ loadList();
   </main>
 </div>
 <script>
-function cu(){return netlifyIdentity&&netlifyIdentity.currentUser()}
-async function tok(){const u=cu();return u?await u.token():null}
-async function ap(path,opts={}){const t=await tok();opts.headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});if(t)opts.headers.Authorization='Bearer '+t;const r=await fetch(path,opts);return r.json()}
-const who=document.getElementById('whoami');const bIn=document.getElementById('btnLogin');const bOut=document.getElementById('btnLogout');
-function upd(){
-  const u=cu();
-  if(u){
-    who.classList.remove('hide'); who.textContent=u.email; bIn.classList.add('hide'); bOut.classList.remove('hide');
-    if(!document.getElementById('quicknav')){
-      const q=document.createElement('div'); q.id='quicknav'; q.style.marginRight='8px';
-      q.innerHTML=`<a href="/admin.html" class="btn btn-outline" style="margin-right:6px">Admin</a>
-                   <a href="/pegawai.html" class="btn btn-outline" style="margin-right:6px">Pegawai</a>
-                   <a href="/pengesah.html" class="btn btn-outline">Pengesah</a>`;
-      bIn.parentNode.insertBefore(q, bIn);
-    }
-  } else {
-    who.classList.add('hide'); bIn.classList.remove('hide'); bOut.classList.add('hide');
-    const q=document.getElementById('quicknav'); if(q) q.remove();
-  }
+function token(){return localStorage.getItem('mcToken')||null}
+function setToken(t){ if(t) localStorage.setItem('mcToken',t); else localStorage.removeItem('mcToken');}
+function parseJwt(t){try{const p=JSON.parse(atob(t.split('.')[1])); return p;}catch{return null}}
+function user(){const t=token();return t?parseJwt(t):null}
+async function ap(path, opts={}){
+  opts.headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+  const t=token(); if(t) opts.headers.Authorization='Bearer '+t;
+  const r = await fetch(path, opts); return r.json();
 }
-bIn.addEventListener('click',()=>netlifyIdentity.open('login')); bOut.addEventListener('click',()=>netlifyIdentity.logout());
-netlifyIdentity.on('init',upd); netlifyIdentity.on('login',()=>{upd();}); netlifyIdentity.on('logout',()=>{upd();}); netlifyIdentity.init();
+const who=document.getElementById('whoami'), bIn=document.getElementById('btnLogin'), bOut=document.getElementById('btnLogout');
+function updHeader(){const u=user(); if(u){who.classList.remove('hide'); who.textContent=u.email+' • '+u.role.toUpperCase(); bIn.classList.add('hide'); bOut.classList.remove('hide'); showQuickNav();} else {who.classList.add('hide'); bIn.classList.remove('hide'); bOut.classList.add('hide'); hideQuickNav();}}
+function showQuickNav(){ if(document.getElementById('quicknav')) return; const q=document.createElement('div'); q.id='quicknav'; q.style.marginRight='8px'; q.innerHTML=`<a href="/admin.html" class="btn btn-outline" style="margin-right:6px">Admin</a><a href="/pegawai.html" class="btn btn-outline" style="margin-right:6px">Pegawai</a><a href="/pengesah.html" class="btn btn-outline">Pengesah</a>`; bIn.parentNode.insertBefore(q, bIn);}
+function hideQuickNav(){ const q=document.getElementById('quicknav'); if(q) q.remove();}
+bIn.addEventListener('click',()=>location.href='/login.html'); 
+bOut.addEventListener('click',()=>{ setToken(null); updHeader(); location.href='/'; });
+updHeader();
 </script>
 </body></html>
