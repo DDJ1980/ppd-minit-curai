@@ -59,4 +59,43 @@ bIn.addEventListener('click',()=>location.href='/login.html');
 bOut.addEventListener('click',()=>{ setToken(null); updHeader(); location.href='/'; });
 updHeader();
 </script>
+
+<section id="quickActions" style="text-align:center;margin:20px auto;max-width:1000px">
+  <h3 style="margin:0 0 8px;">Akses Pantas</h3>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+    <a class="btn primary" href="/login.html?role=admin">Login Admin</a>
+    <a class="btn" style="background:#ffd000;color:#1a2b6d" href="/login.html?role=pegawai">Login Pegawai</a>
+    <a class="btn" style="background:#0ea67a" href="/login.html?role=pengesah">Login Pengesah</a>
+  </div>
+  <div id="loggedShortcuts" style="margin-top:12px;display:none">
+    <p style="margin:8px 0 6px;font-weight:700">Anda telah log masuk:</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <a id="toAdmin" class="btn" href="/admin.html" style="display:none">Masuk Dashboard Admin</a>
+      <a id="toPegawai" class="btn" href="/pegawai.html" style="display:none">Masuk Dashboard Pegawai</a>
+      <a id="toPengesah" class="btn" href="/pengesah.html" style="display:none">Masuk Dashboard Pengesah</a>
+      <a id="toUrus" class="btn" href="/admin.html#users" style="display:none;background:#1d4ed8;color:white">Urus Pengguna (Admin)</a>
+    </div>
+  </div>
+  <div style="margin-top:16px">
+    <a class="btn" style="min-width:320px;background:#ffd24d;color:#111;font-weight:700" href="/setup.html">Setup Admin (sekali sahaja)</a>
+  </div>
+</section>
+<script>
+(function(){
+  try{
+    const tok = localStorage.getItem('token');
+    if(!tok){ return; }
+    const payload = JSON.parse(atob(tok.split('.')[1]||''));
+    const role = (payload.role||'').toLowerCase();
+    const wrap = document.getElementById('loggedShortcuts');
+    wrap.style.display='block';
+    if(role==='admin'){ 
+      document.getElementById('toAdmin').style.display='inline-flex';
+      document.getElementById('toUrus').style.display='inline-flex';
+    }
+    if(role==='pegawai'){ document.getElementById('toPegawai').style.display='inline-flex'; }
+    if(role==='pengesah'){ document.getElementById('toPengesah').style.display='inline-flex'; }
+  }catch(e){ /* ignore */ }
+})();
+</script>
 </body></html>

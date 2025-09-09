@@ -38,7 +38,12 @@
       <button class="btn btn-primary" type="submit">Hantar kepada Timbalan</button>
       <a id="wa" class="btn btn-gold hide" target="_blank">WhatsApp Timbalan</a>
     </div>
-  </form>
+  <div style="display:flex;gap:12px;justify-content:center;margin-top:8px">
+  <button class="btn" type="button" onclick="draftPdf()">Jana PDF (DRAF)</button>
+  <button class="btn primary" type="button" onclick="hantarTimbalan()">Hantar kepada Timbalan</button>
+  <button class="btn" type="button" onclick="toggleStatus(true)">Lihat Status Penghantaran</button>
+</div>
+</form>
   <p id="ok" class="note hide">✅ Minit dihantar.</p>
 </section>
 <script>
@@ -71,3 +76,35 @@ bOut.addEventListener('click',()=>{ setToken(null); updHeader(); location.href='
 updHeader();
 </script>
 </body></html>
+<script>
+(function(){ const t=document.getElementById('masa'); if(t && !t.value){ const d=new Date(); const z=n=>String(n).padStart(2,'0'); t.value=z(d.getHours())+':'+z(d.getMinutes()); } })();
+async function draftPdf(){ const token=localStorage.getItem('token')||''; const p={tarikh:tarikh.value,masa:masa.value,tempat:tempat.value,tajuk:tajuk.value,catatan:catatan.value,tindakan_ppd:tindakan_ppd.value,rumusan:rumusan.value}; if(!p.tarikh||!p.masa||!p.tajuk){alert('Lengkapkan Tarikh, Masa & Tajuk.');return;} const r=await fetch('/.netlify/functions/save-draft',{method:'POST',headers:{'content-type':'application/json','Authorization':token},body:JSON.stringify(p)}).then(r=>r.json()); if(r.ok&&r.pdfDataUrl){ window.open(r.pdfDataUrl,'_blank'); alert('Draf disimpan & PDF dijana.'); } else alert(r.error||'Gagal jana draf.'); }
+async function hantarTimbalan(){ const f=document.getElementById('minitForm'); if(!f.reportValidity()) return; const token=localStorage.getItem('token')||''; const p={tarikh:tarikh.value,masa:masa.value,tempat:tempat.value,tajuk:tajuk.value,catatan:catatan.value,tindakan_ppd:tindakan_ppd.value,rumusan:rumusan.value}; const r=await fetch('/.netlify/functions/submit-minit',{method:'POST',headers:{'content-type':'application/json','Authorization':token},body:JSON.stringify(p)}).then(r=>r.json()); if(r.ok){ if(confirm('Berjaya dihantar. Nak lihat status penghantaran sekarang?')){ toggleStatus(true); } else { location.reload(); } } else alert(r.error||'Gagal hantar.'); }
+</script>
+
+<section id="statusSaya" class="card" style="margin:16px 0; padding:16px; border-radius:16px; display:none">
+  <h3 style="margin-top:0">Status Penghantaran Saya</h3>
+  <div id="statusList" style="font-size:14px;color:#334155">Memuat...</div>
+</section>
+<script>
+async function toggleStatus(show){
+  const sec=document.getElementById('statusSaya');
+  sec.style.display = show ? 'block' : 'none';
+  if(show){ await loadStatusSaya(); }
+}
+async function loadStatusSaya(){
+  const token=localStorage.getItem('token')||'';
+  const res = await fetch('/.netlify/functions/pegawai-list-self', { headers:{'Authorization':token} }).then(r=>r.json());
+  const el=document.getElementById('statusList');
+  if(!res.ok){ el.textContent = res.error||'Gagal'; return; }
+  if(!res.items.length){ el.textContent = 'Tiada rekod.'; return;}
+  const rows = res.items.sort((a,b)=> (b.tarikh||'').localeCompare(a.tarikh||''));
+  const html = rows.map(r=>{
+    return `<div style="padding:8px 0;border-bottom:1px solid #e5e7eb">
+      <div><b>${r.tajuk||'-'}</b> — <span style="font-size:12px;color:#64748b">${r.tarikh||''} ${r.masa||''}</span></div>
+      <div>Status: <span style="font-weight:700">${r.status||'-'}</span></div>
+    </div>`;
+  }).join('');
+  el.innerHTML = html;
+}
+</script>

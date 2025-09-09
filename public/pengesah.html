@@ -2,7 +2,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pengesah • Sahkan & E‑mel PDF</title>
 <link rel="stylesheet" href="./theme.css">
-</head><body>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script></head><body>
 <div class="banner"></div>
 <div class="wrap">
   <header class="header">
@@ -130,3 +130,17 @@ bOut.addEventListener('click',()=>{ setToken(null); updHeader(); location.href='
 updHeader();
 </script>
 </body></html>
+<script>
+(function(){
+  const form=document.querySelector('form');
+  if(form){
+    const btn=document.createElement('button'); btn.className='btn'; btn.id='resetFilterPengesah'; btn.textContent='Reset';
+    form.appendChild(btn);
+    btn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      ['fromDate','toDate','filterEmail','filterStatus'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      if(window.__lastList){ renderList(window.__lastList); }
+    });
+  }
+})();
+</script>
