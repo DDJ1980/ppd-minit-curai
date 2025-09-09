@@ -1,0 +1,62 @@
+<!doctype html><html lang="ms"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log Masuk</title>
+<link rel="stylesheet" href="./theme.css">
+</head><body>
+<div id='topNav' style='position:sticky;top:0;background:#0b1f57;color:#fff;padding:8px;display:flex;gap:8px;justify-content:flex-end'><a href='/' class='btn' style='background:#1d4ed8;color:#fff'>🏠 Laman Utama</a></div>
+<!--/*topnav*/-->
+<div class="banner"></div>
+<div class="wrap">
+  <header class="header">
+    <div class="brand">
+      <img src="/logo.png" onerror="this.src='/.netlify/functions/assets/logo.png'">
+      <div>
+        <h1>PEJABAT PENDIDIKAN DAERAH MERSING</h1>
+        <small>APLIKASI PEREKODAN MINIT CURAI • SEKTOR PEMBELAJARAN</small>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <span id="whoami" class="badge hide"></span>
+    <a id="btnLogin" class="btn btn-outline">Log Masuk</a>
+    <a id="btnLogout" class="btn btn-outline hide">Log Keluar</a>
+  </header>
+  <main class="kid">
+
+<section class="card card-pad">
+  <h3>Log Masuk</h3>
+  <form id="f" class="form kid">
+    <input class="input" name="email" type="email" placeholder="Emel" required>
+    <input class="input" name="password" type="password" placeholder="Kata laluan" required>
+    <button class="btn btn-primary" type="submit">Log Masuk</button>
+    <p class="note">Belum ada akaun? Minta admin daftarkan.</p>
+  </form>
+</section>
+<script>
+document.getElementById('f').addEventListener('submit', async(e)=>{
+  e.preventDefault(); const fd=new FormData(e.target); const p=Object.fromEntries(fd.entries());
+  const r=await ap('/.netlify/functions/auth-login',{method:'POST',body:JSON.stringify(p)});
+  if(r.ok){ setToken(r.token); location.href='/'; } else alert(r.error||'Gagal log masuk');
+});
+</script>
+
+  </main>
+</div>
+<script>
+function token(){return localStorage.getItem('mcToken')||null}
+function setToken(t){ if(t) localStorage.setItem('mcToken',t); else localStorage.removeItem('mcToken');}
+function parseJwt(t){try{const p=JSON.parse(atob(t.split('.')[1])); return p;}catch{return null}}
+function user(){const t=token();return t?parseJwt(t):null}
+async function ap(path, opts={}){
+  opts.headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+  const t=token(); if(t) opts.headers.Authorization='Bearer '+t;
+  const r = await fetch(path, opts); return r.json();
+}
+const who=document.getElementById('whoami'), bIn=document.getElementById('btnLogin'), bOut=document.getElementById('btnLogout');
+function updHeader(){const u=user(); if(u){who.classList.remove('hide'); who.textContent=u.email+' • '+u.role.toUpperCase(); bIn.classList.add('hide'); bOut.classList.remove('hide'); showQuickNav();} else {who.classList.add('hide'); bIn.classList.remove('hide'); bOut.classList.add('hide'); hideQuickNav();}}
+function showQuickNav(){ if(document.getElementById('quicknav')) return; const q=document.createElement('div'); q.id='quicknav'; q.style.marginRight='8px'; q.innerHTML=`<a href="/admin.html" class="btn btn-outline" style="margin-right:6px">Admin</a><a href="/pegawai.html" class="btn btn-outline" style="margin-right:6px">Pegawai</a><a href="/pengesah.html" class="btn btn-outline">Pengesah</a>`; bIn.parentNode.insertBefore(q, bIn);}
+function hideQuickNav(){ const q=document.getElementById('quicknav'); if(q) q.remove();}
+bIn.addEventListener('click',()=>location.href='/login.html'); 
+bOut.addEventListener('click',()=>{ setToken(null); updHeader(); location.href='/'; });
+updHeader();
+</script>
+</body></html>

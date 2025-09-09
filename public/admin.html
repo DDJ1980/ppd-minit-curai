@@ -1,0 +1,247 @@
+<!doctype html><html lang="ms"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin • Pengguna</title>
+<link rel="stylesheet" href="./theme.css">
+</head><body>
+<div id='topNav' style='position:sticky;top:0;background:#0b1f57;color:#fff;padding:8px;display:flex;gap:8px;justify-content:flex-end'><a href='/' class='btn' style='background:#1d4ed8;color:#fff'>🏠 Laman Utama</a><button class='btn' id='logoutBtn' style='background:#ef4444;color:#fff'>Log Keluar</button></div><script>document.getElementById('logoutBtn')?.addEventListener('click',()=>{localStorage.removeItem('token');location.href='/';});</script>
+<!--/*topnav*/-->
+<div class="banner"></div>
+<div class="wrap">
+  <header class="header">
+    <div class="brand">
+      <img src="/logo.png" onerror="this.src='/.netlify/functions/assets/logo.png'">
+      <div>
+        <h1>PEJABAT PENDIDIKAN DAERAH MERSING</h1>
+        <small>APLIKASI PEREKODAN MINIT CURAI • SEKTOR PEMBELAJARAN</small>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <span id="whoami" class="badge hide"></span>
+    <a id="btnLogin" class="btn btn-outline">Log Masuk</a>
+    <a id="btnLogout" class="btn btn-outline hide">Log Keluar</a>
+  </header>
+  <main class="kid">
+
+<section class="card card-pad">
+  <h3>Pengurusan Pengguna</h3>
+  <div class="grid" style="grid-template-columns:repeat(2,auto);gap:10px;margin-bottom:8px">
+    <a id="btnList" class="btn btn-outline">Senarai</a>
+    <a id="btnSeed" class="btn btn-gold">Seed 17 Pegawai + Timbalan</a>
+  </div>
+  <form id="uf" class="form">
+    <div class="row-2">
+      <input class="input" name="name" placeholder="Nama" required>
+      <input class="input" name="email" type="email" placeholder="Emel" required>
+    </div>
+    <div class="row-2">
+      <select class="select" name="role">
+        <option value="pegawai">Pegawai</option>
+        <option value="pengesah">Pengesah (Timbalan)</option>
+        <option value="admin">Admin</option>
+      </select>
+      <input class="input" name="whatsapp" placeholder="WhatsApp (cth 6019xxxxxxx)">
+    </div>
+    <input class="input" name="password" type="password" placeholder="Set / Tukar kata laluan (opsyenal)">
+    <div class="grid" style="grid-template-columns:repeat(2,auto);gap:10px">
+      <button class="btn btn-primary" type="submit">Simpan / Kemas Kini</button>
+      <button id="btnDelete" class="btn btn-outline" type="button">Padam (ikut emel)</button>
+    </div>
+  </form>
+  <div id="list" class="kid"></div>
+</section>
+<script>
+const me = user(); if(!me || me.role!=='admin'){ alert('Akses admin sahaja'); location.href='/'; }
+async function listU(){ const r=await ap('/.netlify/functions/admin-users',{method:'POST',body:JSON.stringify({action:'list'})}); 
+  if(r.ok){ const rows=(r.users||[]).map(u=>`<tr><td>${u.role.toUpperCase()}</td><td>${u.name}</td><td>${u.email}</td><td>${u.whatsapp||''}</td></tr>`).join(''); 
+  document.getElementById('list').innerHTML=`<table class='table'><thead><tr><th>Peranan</th><th>Nama</th><th>Emel</th><th>WhatsApp</th></tr></thead><tbody>${rows}</tbody></table>`;}}
+document.getElementById('btnList').onclick=listU;
+document.getElementById('uf').addEventListener('submit', async(e)=>{ e.preventDefault(); const p=Object.fromEntries(new FormData(e.target).entries()); const r=await ap('/.netlify/functions/admin-users',{method:'POST',body:JSON.stringify({action:'upsert',user:p})}); alert(r.ok?'Disimpan':'Gagal'); listU(); e.target.reset();});
+document.getElementById('btnDelete').onclick = async()=>{ const email=document.querySelector('[name=email]').value; if(!email) return alert('Isi emel'); const r=await ap('/.netlify/functions/admin-users',{method:'POST',body:JSON.stringify({action:'delete',email})}); alert(r.ok?'Dipadam':'Gagal'); listU(); };
+document.getElementById('btnSeed').onclick = async()=>{ if(!confirm('Seed pengguna rasmi?')) return; const r=await ap('/.netlify/functions/admin-users',{method:'POST',body:JSON.stringify({action:'seed'})}); alert(r.ok?'Done':'Gagal'); listU(); };
+listU();
+</script>
+
+  </main>
+</div>
+<script>
+function token(){return localStorage.getItem('mcToken')||null}
+function setToken(t){ if(t) localStorage.setItem('mcToken',t); else localStorage.removeItem('mcToken');}
+function parseJwt(t){try{const p=JSON.parse(atob(t.split('.')[1])); return p;}catch{return null}}
+function user(){const t=token();return t?parseJwt(t):null}
+async function ap(path, opts={}){
+  opts.headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+  const t=token(); if(t) opts.headers.Authorization='Bearer '+t;
+  const r = await fetch(path, opts); return r.json();
+}
+const who=document.getElementById('whoami'), bIn=document.getElementById('btnLogin'), bOut=document.getElementById('btnLogout');
+function updHeader(){const u=user(); if(u){who.classList.remove('hide'); who.textContent=u.email+' • '+u.role.toUpperCase(); bIn.classList.add('hide'); bOut.classList.remove('hide'); showQuickNav();} else {who.classList.add('hide'); bIn.classList.remove('hide'); bOut.classList.add('hide'); hideQuickNav();}}
+function showQuickNav(){ if(document.getElementById('quicknav')) return; const q=document.createElement('div'); q.id='quicknav'; q.style.marginRight='8px'; q.innerHTML=`<a href="/admin.html" class="btn btn-outline" style="margin-right:6px">Admin</a><a href="/pegawai.html" class="btn btn-outline" style="margin-right:6px">Pegawai</a><a href="/pengesah.html" class="btn btn-outline">Pengesah</a>`; bIn.parentNode.insertBefore(q, bIn);}
+function hideQuickNav(){ const q=document.getElementById('quicknav'); if(q) q.remove();}
+bIn.addEventListener('click',()=>location.href='/login.html'); 
+bOut.addEventListener('click',()=>{ setToken(null); updHeader(); location.href='/'; });
+updHeader();
+</script>
+</body></html>
+<section id="users" class="card" style="margin:16px; padding:16px; border-radius:16px;">
+  <h3 style="margin:0 0 10px;">Senarai Pengguna</h3>
+  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+    <input id="searchUser" type="search" placeholder="Cari nama atau emel..." style="padding:10px;border:1px solid #e5e7eb;border-radius:10px;min-width:260px">
+    <select id="filterRole" style="padding:10px;border:1px solid #e5e7eb;border-radius:10px;">
+      <option value="">Semua peranan</option>
+      <option value="pegawai">Pegawai</option>
+      <option value="pengesah">Pengesah</option>
+      <option value="admin">Admin</option>
+    </select>
+    <button id="refreshUsers" class="btn">Refresh</button>
+    <button id="resetUsersFilter" class="btn">Reset</button>
+    <button id="addNewUser" class="btn primary">+ Tambah Pengguna</button>
+  </div>
+  <table class="table" id="usersTable" style="width:100%;border-collapse:collapse">
+    <thead><tr>
+      <th style="background:#f1f5f9;padding:10px">Nama</th>
+      <th style="background:#f1f5f9;padding:10px">Emel</th>
+      <th style="background:#f1f5f9;padding:10px">Peranan</th>
+      <th style="background:#f1f5f9;padding:10px">WhatsApp</th>
+      <th style="background:#f1f5f9;padding:10px;width:160px">Tindakan</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section class="card" style="margin:16px; padding:16px; border-radius:16px; background:#f8fafc">
+  <h3 style="margin:0 0 8px;">Import Pengguna (Excel/CSV)</h3>
+  <p><b>Langkah 1:</b> Muat turun templat → <b>Langkah 2:</b> Isi dalam Excel → <b>Langkah 3:</b> Upload & Import</p>
+  <a href="/templates/Templat-Pengguna-PPD.csv" class="btn">Templat CSV</a>
+  <a href="/templates/Templat-Pengguna-PPD.xlsx" class="btn" style="margin-left:8px">Templat XLSX</a>
+  <input id="bulkFile" type="file" accept=".csv,.xlsx" style="display:block;margin-top:12px">
+  <button id="bulkBtn" class="btn" style="margin-top:8px">Import sekarang</button>
+  <div id="bulkLog" style="font-family:monospace;margin-top:10px;white-space:pre-wrap;"></div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+(function(){
+  const $ = sel => document.querySelector(sel);
+  const token = localStorage.getItem('token')||'';
+  const tbody = document.querySelector('#usersTable tbody');
+
+  function badge(role){
+    const r=(role||'').toLowerCase();
+    const base='display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;';
+    if(r==='pengesah') return `<span style="${base}background:#dcfce7;color:#065f46">${r}</span>`;
+    if(r==='admin') return `<span style="${base}background:#e5e7eb;color:#111827">${r}</span>`;
+    return `<span style="${base}background:#e0f2fe;color:#075985">${r||'-'}</span>`;
+  }
+
+  function render(users){
+    const q=($('#searchUser')?.value||'').toLowerCase();
+    const fr=($('#filterRole')?.value||'').toLowerCase();
+    const rows = (users||[]).filter(u=>{
+      const hit=(u.name||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q);
+      const okRole=!fr||(String(u.role||'').toLowerCase()===fr);
+      return hit&&okRole;
+    }).map(u=>`<tr>
+      <td style="border-bottom:1px solid #e5e7eb;padding:10px">${u.name||'-'}</td>
+      <td style="border-bottom:1px solid #e5e7eb;padding:10px">${u.email||'-'}</td>
+      <td style="border-bottom:1px solid #e5e7eb;padding:10px">${badge(u.role)}</td>
+      <td style="border-bottom:1px solid #e5e7eb;padding:10px">${u.whatsapp||'-'}</td>
+      <td style="border-bottom:1px solid #e5e7eb;padding:10px">
+        <button class="btn" data-edit="${u.email}">Edit</button>
+        <button class="btn" style="background:#ef4444;color:#fff" data-del="${u.email}">Delete</button>
+      </td>
+    </tr>`).join('');
+    tbody.innerHTML = rows || `<tr><td colspan="5" style="text-align:center;color:#64748b;padding:10px">Tiada rekod</td></tr>`;
+  }
+
+  async function load(){
+    const res = await fetch('/.netlify/functions/admin-list-users', { headers:{'Authorization': token} }).then(r=>r.json()).catch(()=>({ok:false}));
+    if(res.ok){ window.__users=res.users; render(res.users); } else { alert(res.error||'Gagal muat pengguna'); }
+  }
+
+  // Events
+  tbody.addEventListener('click', async (e)=>{
+    const t=e.target.closest('button'); if(!t) return;
+    const email=t.getAttribute('data-edit')||t.getAttribute('data-del');
+    const user=(window.__users||[]).find(u=>u.email===email);
+    if(t.hasAttribute('data-edit')) openModal(user);
+    else if(t.hasAttribute('data-del')){
+      if(confirm('Padam pengguna ini?')){
+        const res=await fetch('/.netlify/functions/admin-delete-user',{method:'POST',headers:{'content-type':'application/json','Authorization':token},body:JSON.stringify({email})}).then(r=>r.json());
+        if(res.ok){ await load(); } else alert(res.error||'Gagal padam');
+      }
+    }
+  });
+  document.getElementById('searchUser')?.addEventListener('input', ()=>render(window.__users||[]));
+  document.getElementById('filterRole')?.addEventListener('change', ()=>render(window.__users||[]));
+  document.getElementById('refreshUsers')?.addEventListener('click', load);
+  document.getElementById('resetUsersFilter')?.addEventListener('click', ()=>{
+    const s=document.getElementById('searchUser'); if(s) s.value='';
+    const r=document.getElementById('filterRole'); if(r) r.value='';
+    render(window.__users||[]);
+  });
+  document.getElementById('addNewUser')?.addEventListener('click', ()=>openModal({role:'pegawai'}));
+
+  // Modal
+  function openModal(u){
+    const modal=document.getElementById('userModal');
+    document.getElementById('modalTitle').textContent = u && u.email ? 'Edit Pengguna' : 'Tambah Pengguna';
+    document.getElementById('m_originalEmail').value = u.email||'';
+    document.getElementById('m_name').value = u.name||'';
+    document.getElementById('m_email').value = u.email||'';
+    document.getElementById('m_whatsapp').value = u.whatsapp||'';
+    document.getElementById('m_role').value = (u.role||'pegawai').toLowerCase();
+    document.getElementById('m_password').value = '';
+    modal.style.display='flex';
+  }
+  document.getElementById('cancelModal')?.addEventListener('click', ()=> document.getElementById('userModal').style.display='none');
+  document.getElementById('userModal')?.addEventListener('click', (e)=>{ if(e.target.id==='userModal') document.getElementById('userModal').style.display='none'; });
+  document.getElementById('saveUser')?.addEventListener('click', async ()=>{
+    const payload={ originalEmail: document.getElementById('m_originalEmail').value||undefined, name: document.getElementById('m_name').value.trim(), email: document.getElementById('m_email').value.trim(), whatsapp: document.getElementById('m_whatsapp').value.trim(), role: document.getElementById('m_role').value };
+    const pwd=document.getElementById('m_password').value.trim(); if(pwd) payload.password=pwd;
+    if(!payload.email){ alert('Emel wajib diisi'); return; }
+    const res=await fetch('/.netlify/functions/admin-upsert-user',{method:'POST',headers:{'content-type':'application/json','Authorization':token},body:JSON.stringify(payload)}).then(r=>r.json());
+    if(res.ok){ document.getElementById('userModal').style.display='none'; await load(); } else alert(res.error||'Gagal simpan');
+  });
+
+  // Import users
+  async function upsert(u){
+    const res = await fetch('/.netlify/functions/admin-upsert-user', { method:'POST', headers:{'content-type':'application/json','Authorization':token}, body: JSON.stringify(u) }).then(r=>r.json());
+    return res;
+  }
+  document.getElementById('bulkBtn')?.addEventListener('click', async ()=>{
+    const f=document.getElementById('bulkFile').files[0]; if(!f){ alert('Pilih fail dahulu'); return; }
+    const logEl=document.getElementById('bulkLog'); const log=t=>logEl.textContent+=(t+"\n");
+    const ext=f.name.split('.').pop().toLowerCase();
+    const handle=async(rows)=>{ let ok=0,fail=0; log('Memproses '+rows.length+' rekod...'); for(const u of rows){ try{ const r=await upsert(u); if(r.ok){ ok++; log('OK: '+(u.email||u.name)); } else { fail++; log('Gagal: '+(u.email||u.name)+' → '+(r.error||'?')); } }catch(e){ fail++; log('Gagal: '+(u.email||u.name)+' → '+e.message); } } alert('Import siap. OK: '+ok+' | Gagal: '+fail); load(); };
+    if(ext==='csv'){ const text=await f.text(); const lines=text.split(/\r?\n/).filter(Boolean); const headers=lines.shift().split(',').map(h=>h.trim().toLowerCase()); const idx=k=>headers.indexOf(k); const rows=lines.map(ln=>{ const c=ln.split(',').map(x=>x.trim()); return {name:c[idx('nama')]||c[idx('name')]||'', email:c[idx('email')]||c[idx('emel')]||'', role:(c[idx('role')]||'pegawai').toLowerCase(), whatsapp:c[idx('whatsapp')]||'', password:c[idx('password')]||'ppd12345'}; }); handle(rows); }
+    else { const reader=new FileReader(); reader.onload=e=>{ const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}); const ws=wb.Sheets[wb.SheetNames[0]]; const arr=XLSX.utils.sheet_to_json(ws,{defval:''}); const rows=arr.map(r=>({name:r.nama||r.name||'', email:r.email||r.emel||'', role:(r.role||'pegawai').toLowerCase(), whatsapp:r.whatsapp||'', password:r.password||'ppd12345'})); handle(rows); }; reader.readAsArrayBuffer(f); }
+  });
+
+  load();
+})();
+</script>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="userModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);display:none;align-items:center;justify-content:center;z-index:50">
+  <div class="modal" style="background:white;border-radius:16px;padding:18px;width:min(560px,96vw);box-shadow:0 10px 30px rgba(0,0,0,.2)">
+    <header id="modalTitle" style="font-weight:800;font-size:18px;margin-bottom:8px">Edit Pengguna</header>
+    <div class="grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label>Nama</label><input id="m_name" type="text" class="input" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px"></div>
+      <div><label>Peranan</label>
+        <select id="m_role" class="input" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px">
+          <option value="pegawai">Pegawai</option>
+          <option value="pengesah">Pengesah</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1"><label>Emel</label><input id="m_email" type="email" class="input" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px"></div>
+      <div style="grid-column:1/-1"><label>WhatsApp</label><input id="m_whatsapp" type="text" class="input" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px" placeholder="eg. 6019XXXXXXX"></div>
+      <div style="grid-column:1/-1"><label>Password (biar kosong kalau tak tukar)</label><input id="m_password" type="text" class="input" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px">
+      <button class="btn" id="cancelModal">Batal</button>
+      <button class="btn primary" id="saveUser">Simpan</button>
+    </div>
+    <input type="hidden" id="m_originalEmail">
+  </div>
+</div>

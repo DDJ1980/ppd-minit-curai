@@ -1,0 +1,101 @@
+<!doctype html><html lang="ms"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laman Utama</title>
+<link rel="stylesheet" href="./theme.css">
+</head><body>
+<div class="banner"></div>
+<div class="wrap">
+  <header class="header">
+    <div class="brand">
+      <img src="/logo.png" onerror="this.src='/.netlify/functions/assets/logo.png'">
+      <div>
+        <h1>PEJABAT PENDIDIKAN DAERAH MERSING</h1>
+        <small>APLIKASI PEREKODAN MINIT CURAI • SEKTOR PEMBELAJARAN</small>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <span id="whoami" class="badge hide"></span>
+    <a id="btnLogin" class="btn btn-outline">Log Masuk</a>
+    <a id="btnLogout" class="btn btn-outline hide">Log Keluar</a>
+  </header>
+  <main class="kid">
+
+<section class="hero">
+  <h2>Selamat datang</h2>
+  <p>Sila <b>Log Masuk</b> untuk akses modul Admin, Pegawai & Pengesah.</p>
+  <div class="center" style="margin-top:10px">
+    <a class="btn btn-primary" href="/login.html">Log Masuk</a>
+    <a class="btn btn-gold" href="/setup.html">Setup Admin (sekali sahaja)</a>
+  </div>
+</section>
+
+<section id="tiles" class="grid grid-3 hide">
+  <a class="card card-pad" href="admin.html"><div class="title">ADMIN</div><p>Urus pengguna, eksport CSV & audit.</p></a>
+  <a class="card card-pad" href="pegawai.html"><div class="title">PEGAWAI</div><p>Isi & hantar minit curai.</p></a>
+  <a class="card card-pad" href="pengesah.html"><div class="title">PENGESAH (TIMBALAN)</div><p>Sahkan minit & e‑mel PDF.</p></a>
+</section>
+
+<script>
+(function(){ if(user()) document.getElementById('tiles').classList.remove('hide'); })();
+</script>
+
+  </main>
+</div>
+<script>
+function token(){return localStorage.getItem('mcToken')||null}
+function setToken(t){ if(t) localStorage.setItem('mcToken',t); else localStorage.removeItem('mcToken');}
+function parseJwt(t){try{const p=JSON.parse(atob(t.split('.')[1])); return p;}catch{return null}}
+function user(){const t=token();return t?parseJwt(t):null}
+async function ap(path, opts={}){
+  opts.headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+  const t=token(); if(t) opts.headers.Authorization='Bearer '+t;
+  const r = await fetch(path, opts); return r.json();
+}
+const who=document.getElementById('whoami'), bIn=document.getElementById('btnLogin'), bOut=document.getElementById('btnLogout');
+function updHeader(){const u=user(); if(u){who.classList.remove('hide'); who.textContent=u.email+' • '+u.role.toUpperCase(); bIn.classList.add('hide'); bOut.classList.remove('hide'); showQuickNav();} else {who.classList.add('hide'); bIn.classList.remove('hide'); bOut.classList.add('hide'); hideQuickNav();}}
+function showQuickNav(){ if(document.getElementById('quicknav')) return; const q=document.createElement('div'); q.id='quicknav'; q.style.marginRight='8px'; q.innerHTML=`<a href="/admin.html" class="btn btn-outline" style="margin-right:6px">Admin</a><a href="/pegawai.html" class="btn btn-outline" style="margin-right:6px">Pegawai</a><a href="/pengesah.html" class="btn btn-outline">Pengesah</a>`; bIn.parentNode.insertBefore(q, bIn);}
+function hideQuickNav(){ const q=document.getElementById('quicknav'); if(q) q.remove();}
+bIn.addEventListener('click',()=>location.href='/login.html'); 
+bOut.addEventListener('click',()=>{ setToken(null); updHeader(); location.href='/'; });
+updHeader();
+</script>
+
+<section id="quickActions" style="text-align:center;margin:20px auto;max-width:1000px">
+  <h3 style="margin:0 0 8px;">Akses Pantas</h3>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+    <a class="btn primary" href="/login.html?role=admin">Login Admin</a>
+    <a class="btn" style="background:#ffd000;color:#1a2b6d" href="/login.html?role=pegawai">Login Pegawai</a>
+    <a class="btn" style="background:#0ea67a" href="/login.html?role=pengesah">Login Pengesah</a>
+  </div>
+  <div id="loggedShortcuts" style="margin-top:12px;display:none">
+    <p style="margin:8px 0 6px;font-weight:700">Anda telah log masuk:</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <a id="toAdmin" class="btn" href="/admin.html" style="display:none">Masuk Dashboard Admin</a>
+      <a id="toPegawai" class="btn" href="/pegawai.html" style="display:none">Masuk Dashboard Pegawai</a>
+      <a id="toPengesah" class="btn" href="/pengesah.html" style="display:none">Masuk Dashboard Pengesah</a>
+      <a id="toUrus" class="btn" href="/admin.html#users" style="display:none;background:#1d4ed8;color:white">Urus Pengguna (Admin)</a>
+    </div>
+  </div>
+  <div style="margin-top:16px">
+    <a class="btn" style="min-width:320px;background:#ffd24d;color:#111;font-weight:700" href="/setup.html">Setup Admin (sekali sahaja)</a>
+  </div>
+</section>
+<script>
+(function(){
+  try{
+    const tok = localStorage.getItem('token');
+    if(!tok){ return; }
+    const payload = JSON.parse(atob(tok.split('.')[1]||''));
+    const role = (payload.role||'').toLowerCase();
+    const wrap = document.getElementById('loggedShortcuts');
+    wrap.style.display='block';
+    if(role==='admin'){ 
+      document.getElementById('toAdmin').style.display='inline-flex';
+      document.getElementById('toUrus').style.display='inline-flex';
+    }
+    if(role==='pegawai'){ document.getElementById('toPegawai').style.display='inline-flex'; }
+    if(role==='pengesah'){ document.getElementById('toPengesah').style.display='inline-flex'; }
+  }catch(e){ /* ignore */ }
+})();
+</script>
+</body></html>
